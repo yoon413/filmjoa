@@ -92,4 +92,8 @@
 ### filmjoa 패키지 구조
 ---
 ![filmjoaPackage](https://user-images.githubusercontent.com/61972539/76237974-73fd5f00-6272-11ea-9c27-18a40c137f7e.png)
+
+### filmjoa 데이터베이스 구조
+---
+![filmjoaDB](https://user-images.githubusercontent.com/61972539/76238144-c179cc00-6272-11ea-93c2-2395a556f10e.PNG)
          
