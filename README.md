@@ -90,5 +90,6 @@
 * 03/05: 최종 마무리
 
 ### filmjoa 패키지 구조
-
+---
+![filmjoaPackage](https://user-images.githubusercontent.com/61972539/76237974-73fd5f00-6272-11ea-9c27-18a40c137f7e.png)
          
