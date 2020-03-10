@@ -227,4 +227,163 @@ public int idCheck(@RequestParam("user_id") String user_id) {
 
 * 리뷰 작성
 
-<img src="https://user-images.githubusercontent.com/61972539/76321209-0d854900-6325-11ea-9a6b-69cac72b214f.gif" height="200">
+```javascript
+//리뷰등록
+$("#registerBtn").on("click", function(e){
+	e.preventDefault();
+      	var csrfHeaderName = "${_csrf.headerName}";
+      	var csrfTokenValue = "${_csrf.token}";
+      			
+      	//json 데이터 타입으로 직렬화시켜서 변수에 담음
+      	var formData = $("#reviewForm").serializeObject();
+      			
+      	//비동기 처리
+      	$.ajax({
+      		type : 'post',
+      		url : '/review/new',
+      		data : JSON.stringify(formData),
+      		contentType : "application/json; charset=utf-8",
+      		beforeSend: function(xhr){
+      			xhr.setRequestHeader(csrfHeaderName, csrfTokenValue);
+      		},
+      		success : function(result, status, xhr) {	
+			showList(-1)
+      		},
+      		error : function(xhr, status) {
+      			alert("리뷰 제목, 내용, 평점을 정확히 입력해 주세요.")
+      		}
+      	})
+});
+```
+```java
+// 리뷰 생성
+@PostMapping(value = "/new", consumes = "application/json", produces = { MediaType.TEXT_PLAIN_VALUE })
+public ResponseEntity<String> create(@RequestBody ReviewVO review) {
+	log.info("Review Info: " + review);
+	int insertCount = reviewService.RegisterReview(review);
+	if (insertCount == 1) {
+		reviewService.avgReivewScore(review.getMno());
+		return new ResponseEntity<>("success", HttpStatus.OK);
+	} else {
+		return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+}
+```
+<img src="https://user-images.githubusercontent.com/61972539/76321209-0d854900-6325-11ea-9a6b-69cac72b214f.gif" width="500" height="300">
+
+* 리뷰 수정
+
+
+```javascript
+//수정 버튼 누를 시 등록한 내용 가져오기
+$(document).on("click", "#reviewMod" ,function(e){
+	console.log(getTitle)
+    		
+	$("#titleName").val(getTitle);
+    	$("#titleContent").val(getContent);
+    	$('input:radio[name=modScore]:input[value='+star_score +']').attr("checked", true)
+    			
+});
+      		
+//리뷰 수정
+$(document).on("click", "#modReviewBtn" ,function(e){
+	var modalReviewTitle = $("#titleName").val();
+	var modalReviewContent = $("#titleContent").val();
+	var modalReviewScore = $('input[name=modScore]:checked').val();
+	console.log(modalReviewScore)
+      	$.ajax({
+    		type : 'post',
+    		url : '/review/modify/' + mnoValue + "/" + loginedUserId,
+    		beforeSend: function(xhr){
+    			xhr.setRequestHeader(csrfHeaderName, csrfTokenValue);
+    		},
+    		data: JSON.stringify({mno:mnoValue, user_id:loginedUserId, review_title: modalReviewTitle,
+    			review_content: modalReviewContent, star_score: modalReviewScore }),
+    		contentType : "application/json; charset=utf-8",
+    		success : function(result, status, xhr) {
+    			if (result) {
+    				showList(pageNum)	
+    			}
+    		},
+    		error : function(xhr, status, er) {
+    			if (error) {
+    				alert("리뷰 수정이 되지 않았습니다.")	
+    			}
+    		}
+    	}); //ajax end
+});
+```
+```java
+// 리뷰 수정
+@PostMapping(value = "/modify/{mno}/{user_id}", consumes = "application/json", produces = {
+	MediaType.TEXT_PLAIN_VALUE })
+@Transactional
+public ResponseEntity<String> modify(@RequestBody ReviewVO review, @PathVariable("mno") Long mno,
+	@PathVariable("user_id") String user_id) {
+
+	log.info("Review Info: " + review);
+	log.info("영화 번호: " + mno);
+	review.setMno(mno);
+	review.setUser_id(user_id);
+	if (reviewService.updateReview(review) == 1) {
+		reviewService.avgReivewScore(mno);
+		return new ResponseEntity<>("success", HttpStatus.OK);
+	} else {
+		return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+}
+```
+<img src="https://user-images.githubusercontent.com/61972539/76321217-0fe7a300-6325-11ea-92f3-83dbc1b1365f.gif" width="500" height="300">
+
+* 리뷰 삭제
+
+```javascript
+//리뷰삭제
+$(document).on("click", "#reviewDelete" ,function(e){
+ 			
+	$.ajax({
+		type : 'post',
+    		url : '/review/' + mnoValue + "/" + loginedUserId,
+    		beforeSend: function(xhr){
+    			xhr.setRequestHeader(csrfHeaderName, csrfTokenValue);
+    		},
+    		data: JSON.stringify({mno:mnoValue, user_id:loginedUserId}),
+    		contentType : "application/json; charset=utf-8",
+    		success : function(result, status, xhr) {
+    			if (result) {
+    				showList(pageNum)
+    				$("#revewFormDiv").show();
+    				$("#review_title").val("");
+                		$("#review_content").val("");
+                		$('input:radio[name=modScore]:input[value='+star_score +']').prop('checked', false);
+    			}
+    		},
+    		error : function(xhr, status, er) {
+    			if (error) {
+    				alert("리뷰 삭제가 되지 않았습니다.")
+    			}
+    		}
+	});
+	
+});
+```
+```java
+// 리뷰 제거
+@PostMapping(value = "{mno}/{user_id}", produces = { MediaType.TEXT_PLAIN_VALUE })
+@Transactional
+public ResponseEntity<String> remove(@PathVariable("mno") Long mno, @PathVariable("user_id") String user_id) {
+	log.info("영화 번호: " + mno);
+	log.info("회원Id: " + user_id);
+	if (reviewService.deleteReview(user_id, mno) == 1) {
+		reviewService.avgReivewScore(mno);
+		return new ResponseEntity<>("success", HttpStatus.OK);
+	} else {
+		return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+}
+```
+
+<img src="https://user-images.githubusercontent.com/61972539/76321220-10803980-6325-11ea-8b6a-d8ac8d2b5db9.gif" width="500" height="300">
