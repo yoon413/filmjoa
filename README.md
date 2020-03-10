@@ -451,3 +451,175 @@ public ResponseEntity<String> remove(@PathVariable("mno") Long mno, @PathVariabl
 
 * 영화 등록
 
+```javascript
+// 모달 form
+var formObj = $("form[role='form']");
+
+//영화 정보 등록
+$("#uploadMovie").on("click", function(e){
+	e.preventDefault();
+	var str = "";
+	
+	//이미지 미리보기 ul
+	 $(".uploadResult ul li").each(function(i, obj){
+		var jobj = $(obj);							         
+		str += "<input type='hidden' name='titleImage.img_name' value='"+jobj.data("filename")+"'>";
+		str += "<input type='hidden' name='titleImage.img_path' value='"+jobj.data("path")+"'>";
+	});
+	
+	var genre = [];
+	var total_cnt = 0;
+	
+	// 장르 선택 설정(checkbox) => 무조건 1개의 checkbox는 선택이 되어야 함.
+	$("input[name='movieGenre']:checked").each(function(){
+		if(this.checked){
+			genre[total_cnt] = this.value;
+			total_cnt ++ ;
+		}
+	});
+	switch (genre.length){				
+		case 1 : 	str += "<input type='hidden' name='genre1' value='"+genre[0]+"'>";
+				str += "<input type='hidden' name='genre2' value=''>";
+				str += "<input type='hidden' name='genre3' value=''>";
+				break;
+		case 2 :	str += "<input type='hidden' name='genre1' value='"+genre[0]+"'>";
+			 	str += "<input type='hidden' name='genre2' value='"+genre[1]+"'>";
+				str += "<input type='hidden' name='genre3' value=''>";	
+				break;
+		case 3 : 	str += "<input type='hidden' name='genre1' value='"+genre[0]+"'>";
+				str += "<input type='hidden' name='genre2' value='"+genre[1]+"'>";
+		 		str += "<input type='hidden' name='genre3' value='"+genre[2]+"'>";
+		 		break;
+		}
+						
+	if(genre.length == 0 || genre.length > 3 ){
+		alert("장르를 알맞게 선택하세요(최소 1개, 최대3개)");
+	} else if($("#nation").val() == ''){
+		alert("영화 국가를 선택하세요")
+	} else if($("#title").val()== '' || $("#director").val()== '' || $("#plot").val()== ''){
+		alert("제목, 감독, 줄거리를 제대로 입력하세요.")
+	} else if($("#actor1").val()== ''){
+		alert("최소 한 명의 출연 배우를 입력하세요.")
+	} else if($("#time").val()== '' || $("#time").val().indexOf("분") == -1){
+		alert("상영 시간을 해당 형식에 맞게 입력하세요.")
+	} else if($("#release").val()== '' || $("#release").val().length != 8 ){
+		alert("출시일을 해당 형식에 맞게 입력하세요.")
+	} else if ($("#trailer").val() == '' || $("#thumbnail_path").val() == '' ){
+		alert("트레일러 주소, 썸네일 이미지 주소를 입력하세요.")
+	} else if (!$("#movieImage").val()) {
+		alert ("타이틀 이미지를 선택해주세요.")
+	} else if (! $('input[name="age"]:checked').val()){
+		alert("시청 연령을 선택해주세요.")
+	} else{
+		formObj.append(str).submit();
+	}
+					    
+});
+```
+```javascript
+//영화 타이틀 이미지 첨부 기능
+$("#movieImage").change(function(e) {
+					
+	var formData = new FormData();
+	var inputImg1 = $("input[name='uploadImg']");												var movieImg1 = inputImg1[0].files;
+																		if(!checkExtension(movieImg1[0].name, movieImg1[0].size)) {
+		return false;
+	} else{
+		formData.append("uploadFile", movieImg1[0]);
+	}
+	
+	$.ajax({
+		url : '/admin/uploadMovieImage',
+		processData : false,
+		contentType : false,
+		data : formData,
+		dataType: "json",
+		type : 'POST',
+		beforeSend: function(xhr){
+	      	xhr.setRequestHeader(csrfHeaderName, csrfTokenValue);
+		},
+		success : function(result) {
+			console.log(result);
+			showImage(result);
+		}
+	}); end ajax
+});
+```
+```java
+//영화 이미지 첨부 미리보기
+@GetMapping("/showImage")
+@ResponseBody
+	public ResponseEntity<byte[]> showImage(String img_name) {
+	log.info("fileName: " + img_name);
+	File file = new File("/home/ubuntu/upload/movie/" + img_name);
+		
+	ResponseEntity<byte[]> result = null;
+		
+	try {
+		HttpHeaders header = new HttpHeaders();
+		header.add("Content-Type", Files.probeContentType(file.toPath()));
+		result = new ResponseEntity<>(FileCopyUtils.copyToByteArray(file), header, HttpStatus.OK);
+	} catch (Exception e) {
+		e.printStackTrace();
+	}
+		return result;
+	}
+//영화 이미지 저장, 폴더 생성
+@PostMapping(value= "/uploadMovieImage", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
+@ResponseBody
+public ResponseEntity<List<ImageDTO>> uploadMoviePost(MultipartFile[] uploadFile) {
+		
+	List<ImageDTO> list = new ArrayList<>();
+	log.info("update image....");
+	//업로드 경로 설정
+	String uploadFolder = "/home/ubuntu/upload/movie/";
+	for (MultipartFile multipartFile : uploadFile) {
+
+		ImageDTO imageDTO = new ImageDTO();
+		tring uploadFileName = multipartFile.getOriginalFilename();
+
+		// IE has file path
+		uploadFileName = uploadFileName.substring(uploadFileName.lastIndexOf("/") + 1);
+		log.info("only file name: " + uploadFileName);
+		imageDTO.setImg_name(uploadFileName);
+			
+		// 폴더 생성(영화 이름)
+		File uploadPath = new File (uploadFolder, uploadFileName.substring(0,uploadFileName.lastIndexOf(".")));
+		if ( uploadPath.exists() == false) {
+			log.info(uploadPath);
+			uploadPath.mkdir();
+		}
+		try {
+			File saveFile = new File(uploadPath, uploadFileName);
+			multipartFile.transferTo(saveFile);
+				
+			imageDTO.setImg_path(uploadFileName.substring(0,uploadFileName.lastIndexOf(".")));
+			if(checkImageType(saveFile)) {
+				FileOutputStream thumbnail = new FileOutputStream(new File(uploadPath, "s_" + uploadFileName));
+				Thumbnailator.createThumbnail(multipartFile.getInputStream(), thumbnail, 360, 360);
+				thumbnail.close();
+			}
+				list.add(imageDTO);
+			} catch (Exception e) {
+			
+			log.error(e.getMessage());
+			
+			} // end catch
+
+		} // end for
+		return new ResponseEntity<>(list,HttpStatus.OK);
+	}
+
+//이미지 체크 메서드
+private boolean checkImageType(File file) {
+	try {
+		String contentType = Files.probeContentType(file.toPath());
+		return contentType.startsWith("image");
+	} catch (Exception e) {
+		e.printStackTrace();
+	}
+	return false;
+}	
+	
+```
+<img src="https://user-images.githubusercontent.com/61972539/76329506-031c7c80-6330-11ea-8767-08ded7c8cb56.gif" width="500" height="600">
