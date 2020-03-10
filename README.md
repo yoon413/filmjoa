@@ -204,9 +204,25 @@ $("#user_pw2").blur(function(){
 	});
 
 ```
+
+```java
+// 회원 아이디 중복체크
+@GetMapping(value = "/idCheck", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+@ResponseBody
+public int idCheck(@RequestParam("user_id") String user_id) {
+	log.info("User id: " + user_id);
+	return userService.userIdCheck(user_id);
+}
+```
 <img src="https://user-images.githubusercontent.com/61972539/76312255-fab74800-6315-11ea-8ad8-11d77ff312f7.gif" width="300" height="400">
 아이디 유효성 검사
 <img src="https://user-images.githubusercontent.com/61972539/76312259-fb4fde80-6315-11ea-9bc7-fc81d7e4681b.gif" width="300" height="400">
 이메일 유효성 검사
 <img src="https://user-images.githubusercontent.com/61972539/76312260-fbe87500-6315-11ea-8402-5d44488b38b1.gif" width="300" height="400">
 비밀번호 유효성 검사
+
+---
+
+* 리뷰 작성
+
+<img src="https://user-images.githubusercontent.com/61972539/76312260-fbe87500-6315-11ea-8402-5d44488b38b1.gif" width="300" height="400">
