@@ -794,3 +794,37 @@ public String remove(BoardVO board, @RequestParam("brd_table") String brd_table,
 }
 
 ```
+<img src="https://user-images.githubusercontent.com/61972539/76343192-1b49c700-6343-11ea-8e5e-c159b10fa706.gif" width="500" height="400">
+
+* 답변 처리
+```java
+// 답변 등록
+@PostMapping("/reply")
+public String registerReply2(BoardVO board, @ModelAttribute("cri") Criteria cri, RedirectAttributes rttr) {
+	log.info(board);
+		
+	boardService.registerReply(board);
+		
+	rttr.addFlashAttribute("result", "success");
+
+	rttr.addAttribute("pageNum", cri.getPageNum());
+	rttr.addAttribute("amount", cri.getAmount());
+	rttr.addAttribute("type", cri.getType());
+	rttr.addAttribute("keyword", cri.getKeyword());
+
+	return "redirect:/board/"+ board.getBrd_table();
+}
+```
+```java
+<!--답변 작성 SQL문  -->
+<insert id="insertReply">
+	<selectKey keyProperty="bno" order="BEFORE" resultType="long">
+		select seq_board.nextval from dual
+	</selectKey>
+
+	insert into tbl_board (bno, brd_title, brd_content, user_id, brd_orginNo, brd_groupOrd, brd_table)
+	values (#{bno}, #{brd_title}, #{brd_content}, #{user_id}, #{brd_orginNo}, #{brd_groupOrd}, #{brd_table})
+</insert>
+```
+<img src="https://user-images.githubusercontent.com/61972539/76343201-1c7af400-6343-11ea-8d17-48c094680647.gif" width="500" height="400">
+
