@@ -91,9 +91,122 @@
 
 ### filmjoa 패키지 구조
 ---
-![filmjoaPackage](https://user-images.githubusercontent.com/61972539/76237974-73fd5f00-6272-11ea-9c27-18a40c137f7e.png)
+<img src="https://user-images.githubusercontent.com/61972539/76237974-73fd5f00-6272-11ea-9c27-18a40c137f7e.png" width="600" height="600">
 
 ### filmjoa 데이터베이스 구조
 ---
-![filmjoaDB](https://user-images.githubusercontent.com/61972539/76238144-c179cc00-6272-11ea-93c2-2395a556f10e.PNG)
+<img src="https://user-images.githubusercontent.com/61972539/76238144-c179cc00-6272-11ea-93c2-2395a556f10e.PNG" width="500" height="500">
+
+### 주요 기능
+---
+* 회원가입
+
+```javascript
+//정규 표현식으로 표현한 조건
+var idCondition = /^[a-z0-9]{4,12}$/;
+var mailCondition = /^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a-zA-Z]{2,3}$/i;
+var pwCondition = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/;
+	  
+//아이디 중복값 처리
+var idOverlap = 1;
+	  
+//등록 처리
+$("#register").on("click", function(e) {
+         e.preventDefault();
+         var userId =  $("#user_id").val();
+         var userEmail = $("#user_email").val();
+         var userPw = $("#user_pw").val();
+         var userPw2 = $("#user_pw2").val();
+         if(userId.length < 1 || userEmail.length <1 || userPw.length <1 || userPw2.length <1 
+         || idCondition.test(userId)==false || mailCondition.test(userEmail)==false 
+                  || pwCondition.test(userPw)==false || userPw != userPw2 || idOverlap == 0){
+		         alert("회원 정보를 올바르게 입력하세요");
+		         console.log(idOverlap);
+			         } else {
+				         $("form").submit();
+			         }
+	                  });
+	  
+//아이디 중복 예외 처리(포커스 잃을 때)
+$("#user_id").blur(function(){
+         var user_id = $("#user_id").val();
+		
+         $.ajax({
+	          url : "/main/idCheck?user_id=" + user_id,
+	          type : "get",
+	          success : function(data) {
+		 console.log("1= 중복ok // 0 = 중복x : " +data);
+                 // 아이디가 이미 존재할 경우
+		if (data == 1) {
+		         $("#userIdOverlap").html("중복된 아이디입니다.");
+			$("#userIdOverlap").css("color", "red");
+			idOverlap = 0;
+                          // 아이디가 존재하지 않는 경우
+			else {
+			         if(idCondition.test(user_id)){
+			         $("#userIdOverlap").html("");
+				idOverlap = 1;
+				} else if(user_id ==""){
+				         $("#userIdOverlap").html("아이디를 입력해주세요.");
+				         $("#userIdOverlap").css("color", "red");
+				} else {
+					$("#userIdOverlap").html("아이디는 소문자, 숫자로 4~12자리로 입력.")
+					$("#userIdOverlap").css("color", "red");
+                                          }
+					  
+				}
+			  },
+			  error : function() {
+				  console.log("실패");
+			  }
+		  }); //ajax end
+	  });
+	  
+//이메일 유효성 체크
+$("#user_email").blur(function(){
+         var user_email = $("#user_email").val();
+	if(mailCondition.test(user_email)){
+	         $("#userEmailCondition").html("");			
+		return;
+	} else {
+	         $("#userEmailCondition").html("이메일을 올바르게 입력.");
+		$("#userEmailCondition").css("color", "red");	 
+	}
+								  
+});
+	 
+//비밀번호 검사
+$("#user_pw").blur(function(){
+         var user_pw = $("#user_pw").val();
          
+         if(pwCondition.test(user_pw)){
+	$("#userPwCondition").html("");			  
+	return;
+	} else {
+	         $("#userPwCondition").html("대,소,특문자,숫자 포함 8자리 이상 입력.");
+		$("#userPwCondition").css("color", "red");			  
+	}
+								  
+});
+
+//비밀번호 확인
+$("#user_pw2").blur(function(){
+         var user_pw = $("#user_pw").val();
+	var user_pw2 = $("#user_pw2").val();
+                    
+	if(user_pw2 == user_pw){
+	         $("#userPw2Condition").html("");			  			 
+	         } else {
+		         $("#userPw2Condition").html("비밀번호가 일치하지 않습니다.");
+			$("#userPw2Condition").css("color", "red");			  
+	             }
+								  
+	});
+
+```
+<img src="https://user-images.githubusercontent.com/61972539/76312255-fab74800-6315-11ea-8ad8-11d77ff312f7.gif" width="300" height="400">
+아이디 유효성 검사
+<img src="https://user-images.githubusercontent.com/61972539/76312259-fb4fde80-6315-11ea-9bc7-fc81d7e4681b.gif" width="300" height="400">
+이메일 유효성 검사
+<img src="https://user-images.githubusercontent.com/61972539/76312260-fbe87500-6315-11ea-8402-5d44488b38b1.gif" width="300" height="400">
+비밀번호 유효성 검사
