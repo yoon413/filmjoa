@@ -739,3 +739,58 @@ $("#genreSearchBtn").on("click", function(e){
 	actionForm.submit();
 });
 ```
+<img src="https://user-images.githubusercontent.com/61972539/76341938-13892300-6341-11ea-93e8-12149249e049.gif" width="500" height="400">
+
+* 게시글 처리
+```java
+// 글 등록
+@PostMapping("/register")
+public String register(BoardVO board, RedirectAttributes rttr) {
+	log.info(board);
+	boardService.register(board);
+	rttr.addFlashAttribute("result", "success");
+	return "redirect:/board/"+ board.getBrd_table();
+}
+
+// 글 조회 및 수정 페이지
+@GetMapping({ "/get", "/modify" })
+public void get(Model model, @RequestParam("bno") Long bno, @ModelAttribute("cri") Criteria cri) {
+	log.info("get or modify");
+	model.addAttribute("board", boardService.getBoardByBno(bno));
+}
+
+// 글 수정
+@PostMapping("/modify")
+public String modify(BoardVO board, @ModelAttribute("cri") Criteria cri, RedirectAttributes rttr) {
+	log.info("modify:" + board);
+	if (boardService.modifyBoard(board)) {
+		rttr.addFlashAttribute("result", "success");
+	}
+	rttr.addAttribute("pageNum", cri.getPageNum());
+	rttr.addAttribute("amount", cri.getAmount());
+	rttr.addAttribute("type", cri.getType());
+	rttr.addAttribute("keyword", cri.getKeyword());
+
+	return "redirect:/board/"+ board.getBrd_table();
+}
+
+// 글 제거
+@PostMapping("/remove")
+public String remove(BoardVO board, @RequestParam("brd_table") String brd_table, 
+	Criteria cri, RedirectAttributes rttr) {
+		
+	log.info("글 번호: " + board.getBno());
+	log.info("그룹 번호: " + board.getBrd_groupOrd());
+	if (boardService.removeBoard(board)) {
+		rttr.addFlashAttribute("result", "success");
+	}
+
+	rttr.addAttribute("pageNum", cri.getPageNum());
+	rttr.addAttribute("amount", cri.getAmount());
+	rttr.addAttribute("type", cri.getType());
+	rttr.addAttribute("keyword", cri.getKeyword());
+
+	return "redirect:/board/" + brd_table;
+}
+
+```
