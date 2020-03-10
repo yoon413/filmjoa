@@ -225,8 +225,69 @@ public int idCheck(@RequestParam("user_id") String user_id) {
 비밀번호 유효성 검사
 
 
-* 리뷰 작성
+* 리뷰 조회 함수
+```javascript
+ //리뷰 페이징 및 조회처리 
+function showList(page){
+	var mnoValue = '<c:out value = "${getMovieInfo.mno}"/>';
+      	$.getJSON("/review/pages/" + mnoValue + "/" + page + ".json", function(data){
+      		var list = data.reviewList;
+  		if(page == -1) {
+  			pageNum = Math.ceil(data.replyCnt/10.0);
+  		    	showList(pageNum);
+  		 }
+  		    	  	
+  		 var str="";	       		
+  		 for(var i=0; i<list.length; i++){
+	      	 	console.log(data)
+	                str +=  "<li class='single-reviews'>"
+	                str +=  "<div class='reviews-autor'>"             
+	                str +=  "<img class='reviews-avatar' src='/resources/main/img/avatar.jpg' alt=''>"
+	                str +=  "<span id='reviewTitle' class='reviews-title'>"+list[i].review_title +"</span>"
+	               	str +=  "<span class='reviews-date'>"+displayTime(list[i].updateDate)+"<strong id='id' data-								user='"+list[i].user_id+"'>"+list[i].user_id+"</strong></span>"
+	                str +=  "<span class='reviews-rating'><i class='fa fa-star'></i>"+list[i].star_score+"</span>"
+	                str +=  "</div>"
+	                str +=  "<p class='reviews-text'>"+list[i].review_content+"</p>"		               
+	    	   	str +=  "</li>"
+	    	   	
+			//자신이 작성한 리뷰가 존재하고, 작성한 리뷰일때
+	    	   	if(list[i].user_id == loginedUserId){
+	    	   		getTitle = list[i].review_title;	    	   	
+	    	      		getContent = list[i].review_content;
+	    	      		star_score = list[i].star_score;
+	    	   		str +="<button type='button' class='btn btn-outline-info btn-sm' id='reviewMod' data-toggle='modal' 						data-target='#myModal'>수정</button>"                                              	
+	    	   		str +="<button type='button' class='btn btn-outline-danger btn-sm' id='reviewDelete'>삭제</button>"    
+	    	   		
+				// 리뷰 등록 창은 숨김
+	    	   		$("#revewFormDiv").hide();
+	    	   	}
+			// 작성 리뷰가 없을 경우
+	    	   	if (list.length == 0){
+	      			$("#revewFormDiv").show();
+	      			$("#review_title").val("");
+            			$("#review_content").val("");
+            			$('input:radio[name=modScore]:input[value='+star_score +']').prop('checked', false);
+	      		}
+	    	   		
+	         }//end for
+  		 $(".reviews-box").html(str);
+  		 showReviewPage(data.replyCnt);
+  	});//end function
+  		      
+}//end showList
+```
+```java
+// 리뷰 목록 가져오기
+@GetMapping(value = "/pages/{mno}/{page}", produces = { MediaType.APPLICATION_XML_VALUE,
+	MediaType.APPLICATION_JSON_UTF8_VALUE })
+public ResponseEntity<ReviewPageDTO> getList(@PathVariable("page") int page, @PathVariable("mno") Long mno) {
+	log.info("영화 번호: " + mno);
+	Criteria cri = new Criteria(page, 10);
+	return new ResponseEntity<>(reviewService.getListPage(cri, mno), HttpStatus.OK);
 
+}
+```
+* 리뷰 등록
 ```javascript
 //리뷰등록
 $("#registerBtn").on("click", function(e){
@@ -386,4 +447,7 @@ public ResponseEntity<String> remove(@PathVariable("mno") Long mno, @PathVariabl
 }
 ```
 
-<img src="https://user-images.githubusercontent.com/61972539/76321220-10803980-6325-11ea-8b6a-d8ac8d2b5db9.gif" width="500" height="300">
+<img src="https://user-images.githubusercontent.com/61972539/76325421-9f438500-632a-11ea-8454-2871112caad7.gif" width="500" height="300">
+
+* 영화 등록
+
