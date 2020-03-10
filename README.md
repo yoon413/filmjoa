@@ -698,3 +698,44 @@ public String searchMovie(@RequestParam("title") String title) {
 
 	</select>
 ```
+<img src="https://user-images.githubusercontent.com/61972539/76336979-1af8fe00-633a-11ea-8338-e70d9711e166.gif" width="500" height="400">
+
+* 영화 정렬처리
+
+```javascript
+//정렬 처리
+$("#sortMovie").change(function(e){
+	//정렬처리 값 담기
+	var sortMovie = $("#sortMovie option:selected").val();
+	console.log(sortMovie);
+	
+	//장르 검색 되어 있는 것 처리
+	$("input[name=movieGenre]:checked").each(function(i){
+		genre.push($(this).val());
+	});
+			
+	actionForm.find("input[name='pageNum']").val("1");
+	actionForm.find("input[name='type']").val(sortMovie);
+	actionForm.find("input[name='genreList']").val(genre);	
+	actionForm.find("input[name='searchKeyword']").val();	
+	actionForm.submit();
+			
+});
+       
+//장르 체크박스 처리
+var genre = [];
+//검색버튼 누를 시.
+$("#genreSearchBtn").on("click", function(e){
+	//체크되어 있는 체크박스 genre에 담기
+	$("input[name=movieGenre]:checked").each(function(i){
+		genre.push($(this).val());
+	});					
+	actionForm.find("input[name='pageNum']").val("1");	
+	actionForm.find("input[name='genreList']").val(genre);	
+	//체크되어 있는 것이 없이 검색시 전체 조회
+	if($("input[name=movieGenre]:checked").length < 1){
+		actionForm.find("input[name='searchKeyword']").val("");
+	}
+	actionForm.submit();
+});
+```
