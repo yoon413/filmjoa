@@ -623,3 +623,78 @@ private boolean checkImageType(File file) {
 	
 ```
 <img src="https://user-images.githubusercontent.com/61972539/76329506-031c7c80-6330-11ea-8767-08ded7c8cb56.gif" width="500" height="600">
+
+* 영화 검색
+```java
+// 영화 검색
+@GetMapping("/searchMovie")
+public String searchMovie(@RequestParam("title") String title) {
+	log.info("영화 타이틀: " + title);
+	return "redirect:/main/movieList";
+}
+```
+```java
+	<!-- 정렬 , paging , 장르, 검색, 영화 List SQL문 -->
+	<select id="getListWithPaging" resultMap="MovieVO">
+
+		select *
+		from (
+		select
+		<choose>
+			<when test="type == 'titleAsc' || type == null">
+				/*+INDEX_ASC(A title) */
+			</when>
+			<when test="type == 'titleDesc'">
+				/*+INDEX_DESC(A title) */
+			</when>
+			<when test="type == 'releaseAsc'">
+				/*+INDEX_ASC(A release) */
+			</when>
+			<when test="type == 'releaseDesc'">
+				/*+INDEX_DESC(A release) */
+			</when>
+		</choose>
+		rownum rn, A.*
+		from tbl_movie A
+		where <![CDATA[ rownum <= #{pageNum} * #{amount}]]>
+		<if test="searchKeyword != null and searchKeyword != ''">
+			and title LIKE '%'||#{searchKeyword}||'%'
+		</if>
+		<if test="genreList != null">
+
+			<foreach item="genre" collection="genreList">
+
+				<if test="genreList[0] !='' ">
+
+					<trim prefixOverrides="and">
+						and
+						<trim prefix="and">
+							#{genre} IN(genre1, genre2, genre3)
+						</trim>
+					</trim>
+				</if>
+
+			</foreach>
+
+		</if>
+		) tbl_movie JOIN tbl_image on tbl_movie.mno = tbl_image.mno
+
+		where<![CDATA[ rn > (#{pageNum}-1) * #{amount}]]>
+
+		<choose>
+			<when test="type == 'titleAsc' || type == null">
+				order by title ASC
+			</when>
+			<when test="type == 'titleDesc'">
+				order by title DESC
+			</when>
+			<when test="type == 'releaseAsc'">
+				order by release ASC
+			</when>
+			<when test="type == 'releaseDesc'">
+				order by release DESC
+			</when>
+		</choose>
+
+	</select>
+```
