@@ -818,15 +818,21 @@ public String registerReply2(BoardVO board, @ModelAttribute("cri") Criteria cri,
 }
 ```
 ```java
-<!--답변 작성 SQL문  -->
-<insert id="insertReply">
-	<selectKey keyProperty="bno" order="BEFORE" resultType="long">
-		select seq_board.nextval from dual
-	</selectKey>
 
-	insert into tbl_board (bno, brd_title, brd_content, user_id, brd_orginNo, brd_groupOrd, brd_table)
-	values (#{bno}, #{brd_title}, #{brd_content}, #{user_id}, #{brd_orginNo}, #{brd_groupOrd}, #{brd_table})
-</insert>
+   <!--게시글 가져오기  -->
+   <select id="getListWithPaging" resultType="org.movie.domain.BoardVO">
+  <![CDATA[
+  select 
+    *
+  from 
+      (
+      select
+        rownum rn, bno, brd_title, brd_content, user_id, brd_regdate, brd_updatedate
+        , brd_orginNo, brd_groupOrd
+      from 
+        (select * from tbl_board order by brd_orginno desc, brd_groupord ASC) 
+      where 
+  ]]>
 ```
 <img src="https://user-images.githubusercontent.com/61972539/76343201-1c7af400-6343-11ea-8d17-48c094680647.gif" width="500" height="400">
 
