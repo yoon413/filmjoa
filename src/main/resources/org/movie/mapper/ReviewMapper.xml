@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+  <mapper namespace="org.movie.mapper.ReviewMapper">
+  
+  	<!-- Join 하기 위한 ResultMap -->
+  	<resultMap type="org.movie.domain.MovieVO" id="MovieVO">
+		<result column="mno" property="mno" />
+		<result column="title" property="title" />
+	</resultMap>
+	<resultMap type="org.movie.domain.ReviewVO" id="ReviewVO">
+		<result column="mno" property="mno" />
+		<result column="review_title" property="review_title" />
+		<result column="user_id" property="user_id" />
+		<result column="star_score" property="star_score" />
+		<result column="review_content" property="review_content" />
+		<result column="updateDate" property="updateDate" />		
+		<collection property="movieVO" resultMap="MovieVO" />
+  	</resultMap>
+
+	<!-- 리뷰 생성 -->
+  	<insert id="insertReview">
+  		insert into tbl_review( mno, user_id, star_score, review_title, review_content)
+  		values ( #{mno}, #{user_id}, #{star_score}, #{review_title}, #{review_content})
+  	</insert>
+  
+  <!--  리뷰 수정 -->
+	<update id= "modifyReview">
+		update tbl_review set star_score = #{star_score}, review_title = #{review_title}, review_content = #{review_content},
+		updatedate = sysdate
+		where mno = #{mno} and user_id = #{user_id}
+	</update>
+  
+    <!-- 리뷰 목록 가져오기   -->
+  	<select id="readReviewList" resultType="org.movie.domain.ReviewVO">
+  		select * from tbl_review where mno =#{mno}
+  	</select>
+  	
+  	<!--  User_id가 작성한 리뷰 가져오기 -->
+  	<select id="readReviewByUser" resultMap="ReviewVO">
+  		select tbl_review.mno, star_score, review_title, review_content, tbl_review.updatedate, tbl_movie.title
+  		from tbl_review, tbl_movie 
+  		where tbl_movie.mno = tbl_review.mno
+  		and user_id = #{user_id}
+  	</select>
+  	
+  	<!--해당 유저가 해당 영화에 등록한 리뷰 삭제-->
+  	<delete id="reviewDelete">
+  		delete from tbl_review
+  		where user_id = #{user_id} and mno = #{mno}
+  	</delete>
+  	
+  	<!--  해당 영화에 등록된 리뷰 모두 삭제 -->
+  	<delete id="reviewAllDelete">
+  		delete from tbl_review
+  		where  mno = #{mno}
+  	</delete>
+  	
+  	<!--  리뷰 목록 가져오기 & paging -->
+  	<select id="readReviewListWithPaging"
+		resultType="org.movie.domain.ReviewVO">
+
+  		<![CDATA[
+ 			select  mno, user_id, star_score, review_title, review_content, regdate, updatedate
+			 from 
+   			(
+    		select /*+INDEX(tbl_review idx_review) */ 
+      		rownum rn, mno, user_id, star_score, review_title, review_content, regdate, updatedate
+    		from tbl_review
+    		where mno =  #{mno}
+    		and rownum <= #{cri.pageNum} * #{cri.amount}
+   			) where rn > (#{cri.pageNum} -1) * #{cri.amount}
+		]]>
+
+	</select>
+	
+	<!-- 마이페이지에서 유저가 작성한 본인 리뷰 목록 가져오기 & paging -->
+	<select id="readReviewListWithPagingByUser" resultMap="ReviewVO">
+
+		select *
+		from (	
+		select /*+INDEX(tbl_review idx_review) */ 
+      	rownum rn, mno, user_id, star_score, review_title, review_content, regdate, updatedate
+    	from tbl_review
+    	where user_id =  #{user_id}
+		and <![CDATA[ rownum <= #{cri.pageNum} * #{cri.amount}]]>		
+
+		) tbl_review JOIN tbl_movie on tbl_review.mno = tbl_movie.mno
+
+		where<![CDATA[ rn > (#{cri.pageNum}-1) * #{cri.amount}]]>
+
+	</select>
+	
+	<!--  해당 영화의 리뷰 수  -->
+	<select id="readCountByMno" resultType="int">
+		<![CDATA[
+		select count(user_id) 
+		from tbl_review 
+		where mno = #{mno}
+		]]>
+	</select>
+	
+	<!--  해당 유저의 리뷰 수  -->
+	<select id="readCountByUser" resultType="int">
+		<![CDATA[
+		select count(mno) 
+		from tbl_review 
+		where user_id = #{user_id}
+		]]>
+	</select>
+	
+	<!-- 평균 점수 -->
+	<update id="avgScore">
+		update tbl_movie set avg_score = (select round(sum(star_score)/count(star_score), 1) 
+		from tbl_review where mno = #{mno}) where mno = #{mno}
+	</update>
+	
+  </mapper>
