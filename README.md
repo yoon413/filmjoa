@@ -1,5 +1,7 @@
 ## 영화 리뷰 사이트(Movie Review) -개인 프로젝트
 
+### ppt
+[filmjoa PPT(SlideShare)](https://www.slideshare.net/secret/2NOm42yuIPNHaR) 
 
 ### 목적
 ---
